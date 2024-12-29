@@ -4,8 +4,8 @@ import Image from "next/image";
 
 function FlightDeals() {
   return (
-    <section className="py-10 px-10 flex flex-col justify-start items-start gap-6 md:px-[64px]">
-      <div className="w-full flex justify-between items-center leading-8 text-2xl">
+    <section className="py-10 px-3 flex flex-col justify-start items-start gap-6 md:px-[64px]">
+      <div className="w-full flex justify-between items-start leading-8 text-lg md:text-2xl gap-2">
         <h3 className="font-bold">
           Find your next adventure with these{" "}
           <span className="text-primary">flight deals</span>

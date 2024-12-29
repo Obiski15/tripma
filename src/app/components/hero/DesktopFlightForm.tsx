@@ -42,7 +42,7 @@ interface IForm {
   };
 }
 
-function HeroForm() {
+function DesktopFlightForm() {
   const [numAdults, setNumAdults] = useState<number>(0);
   const [numMinors, setNumMinors] = useState<number>(0);
 
@@ -134,7 +134,7 @@ function HeroForm() {
                         checked={field.value === "round"}
                       />
                     </FormControl>
-                    <FormLabel>Round Trip</FormLabel>
+                    <FormLabel className="!m-0">Round Trip</FormLabel>
                   </FormItem>
                 )}
               />
@@ -153,7 +153,7 @@ function HeroForm() {
                         checked={field.value === "one way"}
                       />
                     </FormControl>
-                    <FormLabel>One Way</FormLabel>
+                    <FormLabel className="!m-0">One Way</FormLabel>
                   </FormItem>
                 )}
               />
@@ -190,11 +190,9 @@ function HeroForm() {
         </Popover>
 
         <Popover>
-          <PopoverTrigger>
-            <div className="flex justify-between items-center px-3 py-2 gap-2">
-              <User />
-              <p>{numAdults + numMinors} Passengers</p>
-            </div>
+          <PopoverTrigger className="flex justify-between items-center px-3 py-2 gap-2">
+            <User />
+            <p>{numAdults + numMinors} Passengers</p>
           </PopoverTrigger>
 
           <PopoverContent className="text-foreground flex flex-col justify-start items-center p-4 gap-2 rounded-md">
@@ -278,4 +276,4 @@ function HeroForm() {
   );
 }
 
-export default HeroForm;
+export default DesktopFlightForm;

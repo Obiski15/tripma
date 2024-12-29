@@ -1,4 +1,5 @@
 import { Star } from "lucide-react";
+import { format } from "date-fns";
 import Image from "next/image";
 
 const reviews: {
@@ -34,24 +35,9 @@ const reviews: {
   },
 ];
 
-const months: string[] = [
-  "january",
-  "february",
-  "march",
-  "april",
-  "may",
-  "june",
-  "july",
-  "august",
-  "september",
-  "october",
-  "november",
-  "december",
-];
-
 function Reviews() {
   return (
-    <section className="flex flex-col justify-start items-center gap-6 p-10 md:p-[64px]">
+    <section className="flex flex-col justify-start items-center gap-6 py-10 px-3 md:p-[64px]">
       <h1 className="w-fit font-bold text-2xl">
         What <span className="text-primary">Tripma</span> users are saying
       </h1>
@@ -73,8 +59,7 @@ function Reviews() {
                 <div className="flex flex-col justify-start items-start">
                   <p className="font-semibold text-lg">{user}</p>
                   <p className="capitalize">
-                    {location} | {months[new Date(date).getMonth() + 1]}{" "}
-                    {new Date(date).getFullYear()}
+                    {location} | {format(date, "MMMM")} {format(date, "yyyy")}
                   </p>
                   <div className="flex justify-between items-center gap-2">
                     {Array.from({ length: 5 }, (_, i) =>

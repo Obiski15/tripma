@@ -2,11 +2,14 @@ import { Apple } from "lucide-react";
 import Image from "next/image";
 
 import Logo from "./Logo";
+import { connection } from "next/server";
 
-function Footer() {
+async function Footer() {
+  await connection();
+
   return (
     <footer className="flex flex-col justify-start items-start gap-4 py-4">
-      <div className="w-full px-10 py-6 flex flex-col justify-between items-start gap-6 sm:flex-row lg:px-[120px] lg:pt-[60px]">
+      <div className="w-full px-3 py-6 flex flex-col justify-between items-start gap-6 sm:flex-row lg:px-[120px] lg:pt-[60px] md:px-10">
         <div className="md:py-4">
           <Logo />
         </div>
@@ -72,7 +75,7 @@ function Footer() {
         </div>
       </div>
 
-      <div className="w-full flex flex-col justify-between items-center px-10 lg:px-[120px] py-3 sm:flex-row">
+      <div className="w-full flex flex-row justify-between items-center px-3 md:px-10 lg:px-[120px] py-3">
         <div className="flex justify-start items-center p-2 gap-5">
           <Image
             width={24}
@@ -94,7 +97,7 @@ function Footer() {
           />
         </div>
 
-        <p>&copy; {new Date().getFullYear()} Tripma incorporated</p>
+        <p>&copy; {new Date().getFullYear()} Tripma inc.</p>
       </div>
     </footer>
   );

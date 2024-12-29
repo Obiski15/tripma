@@ -4,8 +4,8 @@ import Image from "next/image";
 
 function Hotels() {
   return (
-    <section className="py-10 px-10 flex flex-col justify-start items-start gap-6 md:px-[64px]">
-      <div className="w-full flex justify-between items-center text-2xl leading-8">
+    <section className="py-10 px-3 flex flex-col justify-start items-start gap-6 md:px-[64px]">
+      <div className="w-full flex justify-between items-start gap-2 text-lg leading-8 md:text-2xl">
         <h3 className="font-bold">
           Explore unique <span className="text-[#41C6AF]">places to stay</span>
         </h3>

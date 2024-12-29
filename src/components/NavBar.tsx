@@ -24,9 +24,9 @@ function NavBar() {
           <MenuIcon className="md:hidden" />
         </SheetTrigger>
 
-        <SheetTitle></SheetTitle>
-        <SheetDescription></SheetDescription>
         <SheetContent>
+          <SheetTitle></SheetTitle>
+          <SheetDescription></SheetDescription>
           <div className="flex flex-col justify-between items-start gap-2">
             <Button variant="ghost">Flights</Button>
             <Button variant="ghost">Hotels</Button>
