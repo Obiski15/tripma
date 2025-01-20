@@ -1,6 +1,7 @@
-import { formatCurrency } from "@/lib/helpers";
 import { ArrowRight } from "lucide-react";
 import Image from "next/image";
+
+import { formatCurrency } from "@/lib/helpers";
 
 function FlightDeals() {
   return (

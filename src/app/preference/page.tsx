@@ -1,5 +1,7 @@
-function page() {
-  return <section>preference page</section>;
+import Main from "./components/Main";
+
+function Preference() {
+  return <Main />;
 }
 
-export default page;
+export default Preference;

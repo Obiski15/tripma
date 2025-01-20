@@ -1,77 +1,110 @@
 "use client";
 
 import { array, date, number, object, ObjectSchema, string } from "yup";
-import { useFieldArray, useForm } from "react-hook-form";
+import { SubmitHandler, useFieldArray, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { formatCurrency } from "@/lib/helpers";
+import { useRouter } from "next/navigation";
 import { Minus, Plus } from "lucide-react";
 import { format } from "date-fns";
+import { useEffect } from "react";
 import Image from "next/image";
 
-import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
+import { IEmergencyContact, IPassenger, IPassengerForm } from "../types";
+import { useSessionStorage } from "@/hooks/useSessionStorage";
+import { IFlightOffersData } from "@/services/types";
+import {
+  PASSENGER_INFORMATION_SESSION_KEY,
+  SELECTED_FLIGHT_SESSION_KEY,
+} from "@/lib/constants";
+
 import { Calendar } from "@/components/ui/calendar";
+// import { PHONE_CODES } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-
-interface IEmergencyContact {
-  firstName: string;
-  lastName: string;
-  email: string;
-  phone: number;
-}
-
-interface IPassenger extends IEmergencyContact {
-  suffix?: "Mr" | "Mrs" | "Miss" | "Sir";
-  middleName?: string;
-  dob: Date;
-  redress?: number;
-  travellerNumber: number;
-}
-
-interface IForm {
-  passengers: IPassenger[];
-  emergencyContact: IEmergencyContact;
-}
+import {
+  Form,
+  FormItem,
+  FormField,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
 
 function PassengerForm() {
+  const { value: selectedFlight } = useSessionStorage<IFlightOffersData | null>(
+    SELECTED_FLIGHT_SESSION_KEY,
+    null
+  );
+  const { value: passengerInormation, setValue: setPassengerInformation } =
+    useSessionStorage<IPassengerForm | null>(
+      PASSENGER_INFORMATION_SESSION_KEY,
+      null
+    );
+
+  const router = useRouter();
+
   const emergencyContactSchema: ObjectSchema<IEmergencyContact> = object({
-    email: string().trim().required("Email address is required"),
+    email: string().trim().email().required("Email address is required"),
+    phone: number().required("Telephone number is required"),
     firstName: string().required("Firstname is required"),
     lastName: string().required("Lastname is required"),
-    phone: number().required("Tel number is required"),
+    // dialCode: string()
+    // .trim()
+    // .required("country code is required")
+    // .max(4)
+    // .min(2)
+    // .matches(/^\+\d{1,4}$/, {
+    //   message: "invalid dial code",
+    // }),
   });
 
   const passengerSchema: ObjectSchema<IPassenger> =
     emergencyContactSchema.concat(
       object({
-        suffix: string<"Mr" | "Mrs" | "Miss" | "Sir">().optional(),
-        travellerNumber: number()
-          .positive()
-          .required("Traveller number is required"),
+        suffix: string<
+          | "Mr"
+          | "Mrs"
+          | "Miss"
+          | "Ms"
+          | "Sir"
+          | "Hon"
+          | "Fr"
+          | "Rev"
+          | "Pastor"
+          | "Col"
+          | "Lt"
+          | "Eng"
+          | "Prof"
+          | "Dr"
+        >().optional(),
         dob: date().required("Passenger's dob is required"),
         redress: number().positive().optional(),
+        travellerNumber: string().optional(),
         middleName: string().optional(),
       })
     );
 
-  const formSchema: ObjectSchema<IForm> = object({
+  const formSchema: ObjectSchema<IPassengerForm> = object({
     passengers: array()
       .of(passengerSchema)
       .required("passenger's Information is required to proceed"),
     emergencyContact: emergencyContactSchema,
   });
 
-  const form = useForm<IForm>({
+  const form = useForm<IPassengerForm>({
     resolver: yupResolver(formSchema),
-    defaultValues: {
-      passengers: [{}],
-      emergencyContact: {},
-    },
   });
 
   const { fields } = useFieldArray({
@@ -79,9 +112,28 @@ function PassengerForm() {
     name: "passengers",
   });
 
-  function onSubmit(data: IForm) {
-    console.log(data);
-  }
+  useEffect(() => {
+    if (!selectedFlight) return router.push("/");
+
+    if (
+      !!selectedFlight?.itineraries?.length &&
+      !!selectedFlight?.travelerPricings?.length
+    ) {
+      form.reset({
+        emergencyContact: { ...passengerInormation?.emergencyContact },
+        passengers: [
+          ...selectedFlight?.travelerPricings?.map((_, index) => {
+            return { ...passengerInormation?.passengers?.[index] };
+          }),
+        ],
+      });
+    }
+  }, [selectedFlight, form, router, passengerInormation]);
+
+  const onSubmit: SubmitHandler<IPassengerForm> = (data) => {
+    setPassengerInformation(data);
+    router.push("/preference");
+  };
 
   return (
     <section className="flex flex-col justify-between items-start gap-10 px-3 py-3 md:px-10 min-[880px]:flex-row min-[880px]:gap-20">
@@ -104,7 +156,8 @@ function PassengerForm() {
             {fields.map((field, index) => (
               <div key={field.id} className="w-full flex flex-col gap-8">
                 <p className="text-xl font-semild capitalize">
-                  passenger 1 (Adult)
+                  passenger {index + 1} (
+                  {selectedFlight?.travelerPricings?.[index]?.travelerType})
                 </p>
 
                 <div className="flex gap-4 flex-wrap justify-start items-start">
@@ -120,6 +173,12 @@ function PassengerForm() {
                             {...field}
                           />
                         </FormControl>
+                        <FormMessage>
+                          {
+                            form.formState.errors.passengers?.[index]?.firstName
+                              ?.message
+                          }
+                        </FormMessage>
                       </FormItem>
                     )}
                   />
@@ -152,6 +211,12 @@ function PassengerForm() {
                             {...field}
                           />
                         </FormControl>
+                        <FormMessage>
+                          {
+                            form.formState.errors.passengers?.[index]?.lastName
+                              ?.message
+                          }
+                        </FormMessage>
                       </FormItem>
                     )}
                   />
@@ -161,9 +226,36 @@ function PassengerForm() {
                     control={form.control}
                     render={({ field }) => (
                       <FormItem>
-                        <FormControl>
-                          <Input type="text" placeholder="Suffix" {...field} />
-                        </FormControl>
+                        <Select onValueChange={field.onChange}>
+                          <FormControl>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Suffix" />
+                            </SelectTrigger>
+                          </FormControl>
+
+                          <SelectContent className="text-foreground">
+                            {[
+                              "Mr",
+                              "Mrs",
+                              "Miss",
+                              "Ms",
+                              "Sir",
+                              "Hon",
+                              "Fr",
+                              "Rev",
+                              "Pastor",
+                              "Col",
+                              "Lt",
+                              "Eng",
+                              "Prof",
+                              "Dr",
+                            ].map((title) => (
+                              <SelectItem key={title} value={title}>
+                                {title}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </FormItem>
                     )}
                   />
@@ -177,27 +269,41 @@ function PassengerForm() {
                           <FormControl>
                             <PopoverContent className="bg-background text-foreground">
                               <Calendar
+                                mode="single"
                                 selected={field.value}
                                 onSelect={field.onChange}
-                                disabled={{ after: new Date() }}
-                                mode="single"
+                                disabled={{
+                                  after:
+                                    selectedFlight?.travelerPricings?.[
+                                      index
+                                    ]?.travelerType.toLowerCase() === "adult"
+                                      ? new Date(
+                                          new Date().setFullYear(
+                                            new Date().getFullYear() - 12
+                                          )
+                                        )
+                                      : new Date(),
+                                }}
                               />
                             </PopoverContent>
                           </FormControl>
                         </FormItem>
+
                         <PopoverTrigger>
-                          <Input
-                            placeholder="Date of birth*"
-                            value={format(
-                              field.value ? field.value : new Date(),
-                              "P"
-                            )}
-                            readOnly
-                            className="cursor-pointer"
-                          />
+                          <p className="px-3 py-1 text-base border border-input shadow-sm rounded-md">
+                            {field.value
+                              ? format(field.value, "P")
+                              : "Pick a date"}
+                          </p>
                           <p className="mt-1 text-xs text-left uppercase">
                             MM/DD/YYYY
                           </p>
+                          <FormMessage>
+                            {
+                              form.formState.errors.passengers?.[index]?.dob
+                                ?.message
+                            }
+                          </FormMessage>
                         </PopoverTrigger>
                       </Popover>
                     )}
@@ -217,25 +323,63 @@ function PassengerForm() {
                             {...field}
                           />
                         </FormControl>
+                        <FormMessage>
+                          {
+                            form.formState.errors.passengers?.[index]?.email
+                              ?.message
+                          }
+                        </FormMessage>
                       </FormItem>
                     )}
                   />
 
-                  <FormField
-                    name={`passengers.${index}.phone`}
-                    control={form.control}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormControl>
-                          <Input
-                            type="tel"
-                            placeholder="Phone number*"
-                            {...field}
-                          />
-                        </FormControl>
-                      </FormItem>
-                    )}
-                  />
+                  <div className="flex justify-start items-center">
+                    {/* <FormField
+                      name={`passengers.${index}.dialCode`}
+                      control={form.control}
+                      render={() => (
+                        <Select>
+                          <SelectTrigger>
+                            <SelectValue placeholder="+" />
+                          </SelectTrigger>
+
+                          <SelectContent className="text-foreground">
+                            {PHONE_CODES.map((code) => (
+                              <SelectItem
+                                key={code.name}
+                                value={code.dial_code}
+                              >
+                                {code.emoji}
+                                {code.dial_code}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    /> */}
+
+                    <FormField
+                      name={`passengers.${index}.phone`}
+                      control={form.control}
+                      render={({ field }) => (
+                        <FormItem className="w-full">
+                          <FormControl>
+                            <Input
+                              type="tel"
+                              placeholder="Phone number*"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage>
+                            {
+                              form.formState.errors.passengers?.[index]?.phone
+                                ?.message
+                            }
+                          </FormMessage>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
 
                   <FormField
                     name={`passengers.${index}.redress`}
@@ -260,8 +404,8 @@ function PassengerForm() {
                       <FormItem>
                         <FormControl>
                           <Input
-                            type="number"
-                            placeholder="Known traveller number*"
+                            type="text"
+                            placeholder="Known traveller number"
                             {...field}
                           />
                         </FormControl>
@@ -276,10 +420,6 @@ function PassengerForm() {
               <h3 className="text-lg font-semibold">
                 Emergency Contact Information
               </h3>
-              <div className="flex justify-between items-center gap-1">
-                <input type="checkbox" />
-                <p>same as Passenger</p>
-              </div>
 
               <div className="w-full flex flex-col justify-start items-start gap-4">
                 <div className="w-full flex justify-between items-between gap-4">
@@ -295,6 +435,12 @@ function PassengerForm() {
                             {...field}
                           />
                         </FormControl>
+                        <FormMessage>
+                          {
+                            form.formState.errors.emergencyContact?.firstName
+                              ?.message
+                          }
+                        </FormMessage>
                       </FormItem>
                     )}
                   />
@@ -311,6 +457,12 @@ function PassengerForm() {
                             {...field}
                           />
                         </FormControl>
+                        <FormMessage>
+                          {
+                            form.formState.errors.emergencyContact?.lastName
+                              ?.message
+                          }
+                        </FormMessage>
                       </FormItem>
                     )}
                   />
@@ -329,6 +481,12 @@ function PassengerForm() {
                             {...field}
                           />
                         </FormControl>
+                        <FormMessage>
+                          {
+                            form.formState.errors.emergencyContact?.email
+                              ?.message
+                          }
+                        </FormMessage>
                       </FormItem>
                     )}
                   />
@@ -345,6 +503,12 @@ function PassengerForm() {
                             {...field}
                           />
                         </FormControl>
+                        <FormMessage>
+                          {
+                            form.formState.errors.emergencyContact?.phone
+                              ?.message
+                          }
+                        </FormMessage>
                       </FormItem>
                     )}
                   />
@@ -381,21 +545,21 @@ function PassengerForm() {
             </div>
 
             <div className="py-10">
-              <Button type="submit">Save</Button>
+              <Button type="submit">Selct Seats</Button>
             </div>
           </form>
         </Form>
       </div>
 
       <div className="w-full min-[880px]:w-[45%]">
-        <div className="border-border border-[1px] rounded-lg p-4">
+        <div className="border-border border rounded-lg p-4">
           <div className="flex justify-start items-start gap-1 border-b-[1px] border-border py-2">
             <div className="relative w-10 h-10">
               <Image
                 src="/images/airline.png"
-                alt="eee"
+                alt="airline"
                 fill={true}
-                className="rounded-full object-fit object-center"
+                className="rounded-full object-cover object-center"
               />
             </div>
 
@@ -404,7 +568,7 @@ function PassengerForm() {
               <p>FIG4312</p>
             </div>
 
-            <div className="flex-1 flex flex-col justify-start items-start gap-1">
+            <div className="flex-1 flex flex-col justify-start items-end gap-1">
               <p>16h 45m (+1d)</p>
               <p>7:00 AM - 4:15 PM</p>
               <p>2h 45m in HNL</p>
@@ -415,9 +579,9 @@ function PassengerForm() {
             <div className="relative w-10 h-10">
               <Image
                 src="/images/airline.png"
-                alt="eee"
+                alt="airline"
                 fill={true}
-                className="rounded-full object-fit object-center"
+                className="rounded-full object-cover object-center"
               />
             </div>
 
@@ -426,7 +590,7 @@ function PassengerForm() {
               <p>FIG4312</p>
             </div>
 
-            <div className="flex-1 flex flex-col justify-start items-start gap-1">
+            <div className="flex-1 flex flex-col justify-start items-end gap-1">
               <p>16h 45m (+1d)</p>
               <p>7:00 AM - 4:15 PM</p>
               <p>2h 45m in HNL</p>
@@ -450,10 +614,6 @@ function PassengerForm() {
           </div>
         </div>
 
-        <div className="flex justify-end items-center py-10">
-          <Button>Select Seats</Button>
-        </div>
-
         <div className="flex justify-start items-center py-10 min-[880px]:justify-end">
           <div className="relative p-10 pb-20">
             <Image
@@ -463,7 +623,7 @@ function PassengerForm() {
               height={450}
             />
 
-            <div className="absolute w-[237px] h-3 right-[-80px] top-[55%] rotate-90 flex justify-center items-center flex-col">
+            <div className="absolute w-[237px] h-3 right-[-90px] top-[55%] rotate-90 flex justify-center items-center flex-col">
               <p className="bg-[#B0BED9] w-full h-[2px]"></p>
               <div className="bg-background font-medium p-3 absolute left-50% rotate-180">
                 <p className="text-lg ">22&rsquo;&rsquo;</p>

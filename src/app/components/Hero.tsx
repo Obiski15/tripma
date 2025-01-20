@@ -9,8 +9,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 
-import DesktopFlightForm from "./DesktopFlightForm";
-import MobileFlightForm from "./MobileFlightForm";
+import FlightForm from "./flight/FlightForm";
 
 function Hero() {
   return (
@@ -19,7 +18,9 @@ function Hero() {
         It&apos;s more than just a trip
       </h1>
 
-      <DesktopFlightForm />
+      <div className="hidden md:block">
+        <FlightForm />
+      </div>
 
       <div className="w-full grid grid-cols-12 grid-rows-2 justify-between items-center gap-2 md:hidden px-2">
         <Sheet>
@@ -39,7 +40,7 @@ function Hero() {
             <SheetTitle></SheetTitle>
             <SheetDescription></SheetDescription>
 
-            <MobileFlightForm />
+            <FlightForm />
           </SheetContent>
         </Sheet>
 

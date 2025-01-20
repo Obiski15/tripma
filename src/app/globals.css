@@ -110,7 +110,7 @@
     @apply border-border;
   }
   body {
-    @apply bg-background text-foreground min-w-[324px] max-w-[1440px] no-scrollbar;
+    @apply bg-background text-foreground min-w-[324px] max-w-[1440px] no-scrollbar mx-auto;
   }
 
   .card_shadow {

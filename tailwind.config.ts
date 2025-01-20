@@ -52,8 +52,13 @@ export default {
         },
       },
       backgroundImage: {
+        seat: "linear-gradient(180deg, #605DEC 0%, #2A26D9 100%)",
         heroText: "url('/images/hero-text.png')",
+        plane: "url('/images/plane.png')",
         hero: "url('/images/hero.png')",
+      },
+      backdropBlur: {
+        24: "24px",
       },
       borderRadius: {
         lg: "var(--radius)",
