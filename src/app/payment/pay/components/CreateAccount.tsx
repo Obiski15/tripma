@@ -15,8 +15,8 @@ function CreateAccount() {
         </p>
 
         <form
-          className="w-full flex flex-col just\
-       items-start gap-4 md:w-[70%]"
+          className="w-full flex flex-col justify-between items-start gap-4 md:w-[70%]"
+          onSubmit={(e) => e.preventDefault()}
         >
           <Input placeholder="Email Address or Phone number" />
           <Input placeholder="Password" />

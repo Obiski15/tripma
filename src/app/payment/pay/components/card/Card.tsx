@@ -26,7 +26,6 @@ const Card = forwardRef<HTMLButtonElement | null, Properties>(
       });
 
       if (result.error) {
-        console.log(result.error.message);
         toast({
           description: result.error.message,
           variant: "destructive",

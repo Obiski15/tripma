@@ -3,7 +3,7 @@
 import { array, date, number, object, ObjectSchema, string } from "yup";
 import { SubmitHandler, useFieldArray, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { formatCurrency } from "@/lib/helpers";
+import { formatCurrency, parseISODuration } from "@/lib/helpers";
 import { useRouter } from "next/navigation";
 import { Minus, Plus } from "lucide-react";
 import { format } from "date-fns";
@@ -47,12 +47,12 @@ function PassengerForm() {
     SELECTED_FLIGHT_SESSION_KEY,
     null
   );
-  const { value: passengerInormation, setValue: setPassengerInformation } =
+  const { value: passengerInformation, setValue: setPassengerInformation } =
     useSessionStorage<IPassengerForm | null>(
       PASSENGER_INFORMATION_SESSION_KEY,
       null
     );
-
+  // const { flightOffers } = useFlightOffers();
   const router = useRouter();
 
   const emergencyContactSchema: ObjectSchema<IEmergencyContact> = object({
@@ -120,20 +120,22 @@ function PassengerForm() {
       !!selectedFlight?.travelerPricings?.length
     ) {
       form.reset({
-        emergencyContact: { ...passengerInormation?.emergencyContact },
+        emergencyContact: { ...passengerInformation?.emergencyContact },
         passengers: [
           ...selectedFlight?.travelerPricings?.map((_, index) => {
-            return { ...passengerInormation?.passengers?.[index] };
+            return { ...passengerInformation?.passengers?.[index] };
           }),
         ],
       });
     }
-  }, [selectedFlight, form, router, passengerInormation]);
+  }, [selectedFlight, form, router, passengerInformation]);
 
   const onSubmit: SubmitHandler<IPassengerForm> = (data) => {
     setPassengerInformation(data);
     router.push("/preference");
   };
+
+  if (!selectedFlight) return null;
 
   return (
     <section className="flex flex-col justify-between items-start gap-10 px-3 py-3 md:px-10 min-[880px]:flex-row min-[880px]:gap-20">
@@ -553,63 +555,76 @@ function PassengerForm() {
 
       <div className="w-full min-[880px]:w-[45%]">
         <div className="border-border border rounded-lg p-4">
-          <div className="flex justify-start items-start gap-1 border-b-[1px] border-border py-2">
-            <div className="relative w-10 h-10">
-              <Image
-                src="/images/airline.png"
-                alt="airline"
-                fill={true}
-                className="rounded-full object-cover object-center"
-              />
-            </div>
+          {selectedFlight?.itineraries?.map((itinerary, i) => (
+            <div
+              key={i + 1}
+              className={`w-full flex justify-start items-start gap-2 py-3 px-1 ${
+                i > 0 ? "border-t border-border" : ""
+              }`}
+            >
+              <div className="relative min-w-10 min-h-10">
+                <Image
+                  src="/images/airline.png"
+                  alt="airline"
+                  fill={true}
+                  className="rounded-full object-cover object-center"
+                />
+              </div>
 
-            <div className="flex-1 flex flex-col justify-start items-start gap-1">
-              <p>Hawaiian Airlines</p>
-              <p>FIG4312</p>
-            </div>
+              <div className="w-full flex justify-between items-start py-2">
+                <div className="flex flex-col justify-start items-start">
+                  {/* <p>
+                    {
+                      flightOffers?.dictionaries?.carriers?.[
+                        itinerary?.segments?.[i]?.carrierCode
+                      ]
+                    }
+                  </p> */}
+                  <p className="text-foreground">
+                    {itinerary?.segments?.map((seg) => seg?.number).join("-")}
+                  </p>
+                </div>
 
-            <div className="flex-1 flex flex-col justify-start items-end gap-1">
-              <p>16h 45m (+1d)</p>
-              <p>7:00 AM - 4:15 PM</p>
-              <p>2h 45m in HNL</p>
+                <div className="flex flex-col justify-start items-end text-right">
+                  <p>{`${parseISODuration(itinerary?.duration)?.hours} ${
+                    parseISODuration(itinerary?.duration)?.minutes
+                  }`}</p>
+                  <p>
+                    {format(itinerary?.segments?.[0]?.departure?.at, "p")} -{" "}
+                    {format(
+                      itinerary?.segments?.at(-1)?.arrival?.at ?? new Date(),
+                      "p"
+                    )}
+                  </p>
+                </div>
+              </div>
             </div>
-          </div>
-
-          <div className="flex justify-start items-start gap-1 py-2">
-            <div className="relative w-10 h-10">
-              <Image
-                src="/images/airline.png"
-                alt="airline"
-                fill={true}
-                className="rounded-full object-cover object-center"
-              />
-            </div>
-
-            <div className="flex-1 flex flex-col justify-start items-start gap-1">
-              <p>Hawaiian Airlines</p>
-              <p>FIG4312</p>
-            </div>
-
-            <div className="flex-1 flex flex-col justify-start items-end gap-1">
-              <p>16h 45m (+1d)</p>
-              <p>7:00 AM - 4:15 PM</p>
-              <p>2h 45m in HNL</p>
-            </div>
-          </div>
+          ))}
         </div>
 
         <div className="flex justify-end items-start">
           <div className="w-[50%] flex justify-between items-start p-2 text-[#27273F] text-base font-semibold">
-            <div className="w-[70%] flex flex-col justify-start items-start gap-1">
-              <p className="w-full">Subtotal</p>
-              <p className="w-full">Taxes and Fees</p>
-              <p className="w-full">Total</p>
-            </div>
+            <div className="w-full flex flex-col justify-start items-end p-2 gap-2 font-semibold">
+              <div className="w-full flex justify-between items-center gap-2">
+                <p className="min-w-[50%]">Subtotal</p>
+                <p>{formatCurrency(88)}</p>
+              </div>
+              <div className="w-full flex justify-between items-center gap-2">
+                <p className="min-w-[50%]">Taxes and fees</p>
+                <p>
+                  {formatCurrency(
+                    selectedFlight?.price?.fees?.reduce(
+                      (acc, fee) => acc + +fee?.amount,
+                      0
+                    ) ?? 0
+                  )}
+                </p>
+              </div>
+              <div className="w-full flex justify-between items-center gap-2">
+                <p className="min-w-[50%]">Total</p>
 
-            <div className="flex flex-col justify-start items-start gap-1">
-              <p className="w-full">{formatCurrency(600)}</p>
-              <p className="w-full">{formatCurrency(50)}</p>
-              <p className="w-full">{formatCurrency(650)}</p>
+                <p>{formatCurrency(selectedFlight?.price?.grandTotal ?? 0)}</p>
+              </div>
             </div>
           </div>
         </div>

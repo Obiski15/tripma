@@ -190,7 +190,7 @@ function FlightForm() {
         <div className="w-full flex justify-between items-start gap-3">
           <Popover>
             <PopoverTrigger className="flex justify-between items-center px-3 py-2 gap-2">
-              <PlaneTakeoff />
+              <PlaneTakeoff width={30} height={30} />
 
               <FormField
                 control={form.control}
@@ -217,7 +217,7 @@ function FlightForm() {
 
           <Popover>
             <PopoverTrigger className="flex justify-between items-center px-3 py-2 gap-2">
-              <PlaneLanding />
+              <PlaneLanding width={30} height={30} />
 
               <FormField
                 name="destination"

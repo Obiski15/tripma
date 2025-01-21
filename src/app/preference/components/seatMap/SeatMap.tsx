@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 
 import { useSessionStorage } from "@/hooks/useSessionStorage";
 import { useSeatMap } from "@/services/seatMap/useSeatMap";
@@ -29,7 +30,7 @@ function SeatMap() {
     SELECTED_FLIGHT_SESSION_KEY,
     null
   );
-  const { value: passengerInormation } =
+  const { value: passengerInformation } =
     useSessionStorage<IPassengerForm | null>(
       PASSENGER_INFORMATION_SESSION_KEY,
       null
@@ -60,10 +61,22 @@ function SeatMap() {
           <ErrorMessage />
         ) : (
           <div className="w-full flex flex-col justify-start items-start gap-4 px-3 py-4 md:px-6">
-            {!passengerInormation?.passengers ? (
-              <div>No passenger information</div>
+            {!passengerInformation?.passengers ? (
+              <div className="w-full flex justify-center items-center">
+                <div className="flex flex-col justify-between items-center gap-3">
+                  <Image
+                    src="/images/seat.png"
+                    width={320}
+                    height={180}
+                    alt="passenger-seat"
+                  />
+                  <p className="font-semibold text-center text-2xl">
+                    Missing passenger information
+                  </p>
+                </div>
+              </div>
             ) : (
-              passengerInormation?.passengers?.map(
+              passengerInformation?.passengers?.map(
                 (passenger, passengerIndex) => (
                   <Dialog key={passengerIndex + 1}>
                     <div

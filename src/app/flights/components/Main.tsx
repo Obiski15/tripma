@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 // import { useForm } from "react-hook-form";
 import { format } from "date-fns";
+import { useEffect } from "react";
 import Image from "next/image";
 import {
   User,
@@ -27,7 +28,6 @@ import { IFlightOffersData } from "@/services/types";
 
 // import { Form, FormControl, FormField, FormItem } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
-import { useEffect } from "react";
 // import {
 //   Select,
 //   SelectItem,
@@ -76,7 +76,7 @@ function Main() {
   return (
     <main className="flex flex-col justify-between items-start gap-5 px-3 py-3">
       {isLoadingFlightOffers ? (
-        <div className="mx-auto card_shadow flex flex-col gap-5 justify-between items-center p-10 rounded-md text-[#27273F]">
+        <div className="text-center mx-auto card_shadow flex flex-col gap-5 justify-between items-center p-5 rounded-md text-[#27273F] md:p-10">
           <Image alt="spinner" src="/icons/spin.svg" width={50} height={50} />
           <div className="flex justify-center items-center gap-3 text-2xl font-bold capitalize">
             <p>{`${searchParams.get("locationCity")} (${searchParams.get(
@@ -421,13 +421,13 @@ function Main() {
                     ))}
                   </div>
 
-                  <div className="flex flex-col justify-start items-end p-4 gap-2 font-semibold">
-                    <div className="flex justify-between items-center gap-1">
-                      <p>Subtotal</p>
+                  <div className="w-full flex flex-col justify-start items-end p-2 gap-2 font-semibold">
+                    <div className="w-full flex justify-between items-center gap-2">
+                      <p className="min-w-[50%]">Subtotal</p>
                       <p>{formatCurrency(88)}</p>
                     </div>
-                    <div className="flex justify-between items-center gap-1">
-                      <p>Taxes and fees</p>
+                    <div className="w-full flex justify-between items-center gap-2">
+                      <p className="min-w-[50%]">Taxes and fees</p>
                       <p>
                         {formatCurrency(
                           selectedFlight?.price?.fees?.reduce(
@@ -437,8 +437,8 @@ function Main() {
                         )}
                       </p>
                     </div>
-                    <div className="flex justify-between items-center gap-1">
-                      <p>Total</p>
+                    <div className="w-full flex justify-between items-center gap-2">
+                      <p className="min-w-[50%]">Total</p>
 
                       <p>
                         {formatCurrency(selectedFlight?.price?.grandTotal ?? 0)}

@@ -37,8 +37,8 @@ function Hero() {
           </SheetTrigger>
 
           <SheetContent className="w-full py-10">
-            <SheetTitle></SheetTitle>
-            <SheetDescription></SheetDescription>
+            <SheetTitle className="hidden"></SheetTitle>
+            <SheetDescription className="hidden"></SheetDescription>
 
             <FlightForm />
           </SheetContent>

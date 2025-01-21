@@ -1,14 +1,20 @@
 "use client";
 
 import { format, intlFormat } from "date-fns";
+import { useRouter } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import { useEffect } from "react";
 
 import { useFlightOffer } from "@/services/flights/useFlightOffer";
 import { useSessionStorage } from "@/hooks/useSessionStorage";
-import { SELECTED_FLIGHT_SESSION_KEY } from "@/lib/constants";
+import { IPassengerForm } from "@/app/passenger/types";
 import { IFlightOffersData } from "@/services/types";
 import { formatCurrency } from "@/lib/helpers";
+import { toast } from "@/hooks/use-toast";
+import {
+  PASSENGER_INFORMATION_SESSION_KEY,
+  SELECTED_FLIGHT_SESSION_KEY,
+} from "@/lib/constants";
 
 import DummyFareBreakdown from "./dummy/DummyFareBreakdown";
 import { Button } from "@/components/ui/button";
@@ -19,8 +25,14 @@ function FareBreakdown() {
     SELECTED_FLIGHT_SESSION_KEY,
     null
   );
+  const { value: passengerInformation } =
+    useSessionStorage<IPassengerForm | null>(
+      PASSENGER_INFORMATION_SESSION_KEY,
+      null
+    );
 
   const { mutate, isLoading, error, data } = useFlightOffer();
+  const router = useRouter();
 
   useEffect(() => {
     if (!selectedFlight) return;
@@ -131,7 +143,18 @@ function FareBreakdown() {
       ))}
 
       <div className="w-full py-2 px-3 flex justify-end items-center md:px-6">
-        <Button>Pay now</Button>
+        <Button
+          onClick={() => {
+            if (!passengerInformation)
+              return toast({
+                variant: "destructive",
+                description: "Missing passenger Information",
+              });
+            router.push("/payment/pay");
+          }}
+        >
+          Pay now
+        </Button>
       </div>
     </section>
   );
