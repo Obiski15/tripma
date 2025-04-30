@@ -5,6 +5,8 @@ import "./globals.css";
 
 import ReactQueryProvider from "@/providers/react-query/ReactQueryProvider";
 import { Toaster } from "@/components/ui/toaster";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 const NunitoSans = Nunito_Sans({
   variable: "--font-geist-sans",
@@ -24,8 +26,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${NunitoSans.variable} antialiased`}>
-        <ReactQueryProvider>{children}</ReactQueryProvider>
-        <Toaster />
+        <ReactQueryProvider>
+          <Header />
+          {children}
+          <Footer />
+          <Toaster />
+        </ReactQueryProvider>
       </body>
     </html>
   );
