@@ -1,9 +1,9 @@
 "use client";
 
 import { SubmitHandler, useForm, useWatch } from "react-hook-form";
-import { date, number, object, ObjectSchema, string } from "yup";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { DateRange } from "react-day-picker";
+import { searchFlightSchema } from "@/schema/FlightSchema";
+import { DateRange, isDateRange } from "react-day-picker";
 import { useRouter } from "next/navigation";
 import { toast } from "@/hooks/use-toast";
 import { useEffect } from "react";
@@ -51,7 +51,7 @@ interface IForm {
   tripType: "round" | "one way";
   destination: string;
   location: string;
-  date: DateRange;
+  date: DateRange | Date;
   passengers: {
     adult: number;
     minor: number;
@@ -65,27 +65,6 @@ function FlightForm() {
   );
   const router = useRouter();
 
-  const schema: ObjectSchema<IForm> = object({
-    travelClass: string<"FIRST" | "ECONOMY" | "BUSINESS" | "ECONOMY_PREMIUM">()
-      .required("Travel class is required")
-      .uppercase(),
-    tripType: string<"round" | "one way">().required("Trip type is required"),
-    destination: string().required("Desired destination is required"),
-    date: object({
-      from: date().required("A departure date is required to proceed"),
-      to: date().optional(),
-    }),
-    location: string().required("Current location is required"),
-    passengers: object({
-      adult: number()
-        .default(1)
-        .positive()
-        .min(1, "At least one adult passenger is required")
-        .required("At least on passenger is required "),
-      minor: number().default(0).min(0),
-    }),
-  });
-
   const form = useForm<IForm>({
     defaultValues: {
       passengers: {
@@ -94,22 +73,17 @@ function FlightForm() {
       },
       tripType: "round",
     },
-    resolver: yupResolver(schema),
+    resolver: yupResolver(searchFlightSchema),
   });
 
-  const watchedPassengers = useWatch({
+  const watchedData = useWatch({
     control: form.control,
-    name: "passengers",
-  });
-
-  const watchedDate = useWatch({
-    control: form.control,
-    name: "date",
   });
 
   useEffect(() => {
     if (!!Object.keys(form.formState.errors).length) {
       const error = form.formState.errors;
+      console.log(error);
       toast({
         description:
           error.location?.message ||
@@ -147,38 +121,45 @@ function FlightForm() {
       ];
     });
 
-    const returnDate = data.date.to ? new Date(data.date.to) : "";
-    const departureDate = new Date(data.date.from!);
+    const departureDate = isDateRange(data.date)
+      ? new Date(data.date.from!)
+      : new Date(data.date);
 
-    router.push(
-      `/flights?originLocationCode=${
-        data.location.split(", ")[0]
-      }&destinationLocationCode=${
-        data.destination.split(", ")[0]
-      }&departureDate=${`${departureDate.getFullYear()}-${(
-        departureDate.getMonth() + 1
-      )
-        .toString()
-        .padStart(2, "0")}-${departureDate
-        .getDate()
-        .toString()
-        .padStart(2, "0")}`}${
-        returnDate
-          ? `&returnDate=${`${returnDate.getFullYear()}-${(
-              returnDate.getMonth() + 1
-            )
-              .toString()
-              .padStart(2, "0")}-${returnDate
-              .getDate()
-              .toString()
-              .padStart(2, "0")}`}`
-          : ""
-      }&adults=${data.passengers.adult}&travelClass=${data.travelClass}${
-        data.passengers.minor ? `&children=${data.passengers.minor}` : ""
-      }&locationCity=${data.location.split(", ")[2]}&destinationCity=${
-        data.destination.split(", ")[2]
-      }`
-    );
+    const returnDate = isDateRange(data.date)
+      ? data.date.to
+        ? new Date(data.date.to!)
+        : ""
+      : "";
+
+    const url = `/flights?originLocationCode=${
+      data.location.split(", ")[0]
+    }&destinationLocationCode=${
+      data.destination.split(", ")[0]
+    }&departureDate=${`${departureDate.getFullYear()}-${(
+      departureDate.getMonth() + 1
+    )
+      .toString()
+      .padStart(2, "0")}-${departureDate
+      .getDate()
+      .toString()
+      .padStart(2, "0")}`}${
+      returnDate
+        ? `&returnDate=${`${returnDate.getFullYear()}-${(
+            returnDate.getMonth() + 1
+          )
+            .toString()
+            .padStart(2, "0")}-${returnDate
+            .getDate()
+            .toString()
+            .padStart(2, "0")}`}`
+        : ""
+    }&adults=${data.passengers.adult}&travelClass=${data.travelClass}${
+      data.passengers.minor ? `&children=${data.passengers.minor}` : ""
+    }&locationCity=${data.location.split(", ")[2]}&destinationCity=${
+      data.destination.split(", ")[2]
+    }`;
+
+    router.push(url);
   };
 
   return (
@@ -248,15 +229,19 @@ function FlightForm() {
             <PopoverTrigger className="flex justify-start items-center px-3 py-2 gap-2">
               <CalendarDaysIcon />
               <p>
-                {!watchedDate?.from
+                {!watchedData.date
                   ? "Pick a date"
-                  : `${
-                      !watchedDate?.from ? "" : format(watchedDate.from!, "PPP")
-                    }${
-                      !watchedDate?.to
+                  : isDateRange(watchedData.date)
+                  ? `${
+                      !watchedData.date?.from
                         ? ""
-                        : `-${format(watchedDate.to!, "PPP")}`
-                    }`}
+                        : format(watchedData.date.from!, "PPP")
+                    }${
+                      !watchedData.date?.to
+                        ? ""
+                        : `-${format(watchedData.date.to!, "PPP")}`
+                    }`
+                  : format(watchedData.date as Date, "PPP")}
               </p>
             </PopoverTrigger>
 
@@ -297,15 +282,25 @@ function FlightForm() {
                 render={({ field }) => (
                   <FormItem>
                     <FormControl>
-                      <Calendar
-                        className="w-full text-foreground"
-                        disabled={{ before: new Date() }}
-                        onSelect={field.onChange}
-                        selected={field.value}
-                        numberOfMonths={2}
-                        initialFocus
-                        mode="range"
-                      />
+                      {watchedData.tripType === "one way" ? (
+                        <Calendar
+                          className="w-full text-foreground"
+                          disabled={{ before: new Date() }}
+                          mode="single"
+                          onSelect={field.onChange}
+                          selected={field.value as Date | undefined}
+                        />
+                      ) : (
+                        <Calendar
+                          className="w-full text-foreground"
+                          disabled={{ before: new Date() }}
+                          onSelect={field.onChange}
+                          selected={field.value as DateRange | undefined}
+                          numberOfMonths={2}
+                          initialFocus
+                          mode="range"
+                        />
+                      )}
                     </FormControl>
                   </FormItem>
                 )}
@@ -317,7 +312,9 @@ function FlightForm() {
             <PopoverTrigger className="flex justify-start items-center px-3 py-2 gap-2 border-border">
               <User />
               <p>
-                {watchedPassengers?.adult + watchedPassengers?.minor} Passengers
+                {Number(watchedData.passengers?.adult) +
+                  Number(watchedData.passengers?.minor)}{" "}
+                Passengers
               </p>
             </PopoverTrigger>
 
@@ -378,8 +375,8 @@ function FlightForm() {
                         className="bg-primary/30 p-1 text-primary"
                         onClick={() => {
                           if (
-                            watchedPassengers?.adult +
-                              watchedPassengers?.minor ===
+                            Number(watchedData.passengers?.adult) +
+                              Number(watchedData.passengers?.minor) ===
                             9
                           )
                             return toast({
@@ -422,8 +419,8 @@ function FlightForm() {
                         className="bg-primary/30 p-1 text-primary"
                         onClick={() => {
                           if (
-                            watchedPassengers?.adult +
-                              watchedPassengers?.minor ===
+                            Number(watchedData.passengers?.adult) +
+                              Number(watchedData.passengers?.minor) ===
                             9
                           )
                             return toast({
